@@ -25,6 +25,7 @@
 #include<string>
 #include<thread>
 #include<opencv2/core/core.hpp>
+#include <ros/ros.h>
 
 #include "Tracking.h"
 #include "FrameDrawer.h"
@@ -105,12 +106,18 @@ public:
     // Call first Shutdown()
     // See format details at: http://vision.in.tum.de/data/datasets/rgbd-dataset
     void SaveKeyFrameTrajectoryTUM(const string &filename);
+    
+    //originally add for monocular 
+    void SaveMonocularTrajectory(const string &filename);
 
     // Save camera trajectory in the KITTI dataset format.
     // Only for stereo and RGB-D. This method does not work for monocular.
     // Call first Shutdown()
     // See format details at: http://www.cvlibs.net/datasets/kitti/eval_odometry.php
     void SaveTrajectoryKITTI(const string &filename);
+
+    // Save map points in the specified format
+    void SaveMapPoints(const string &filename);
 
     // TODO: Save/Load functions
     // SaveMap(const string &filename);
@@ -121,6 +128,16 @@ public:
     int GetTrackingState();
     std::vector<MapPoint*> GetTrackedMapPoints();
     std::vector<cv::KeyPoint> GetTrackedKeyPointsUn();
+
+    Map* GetMap()
+    {
+        return mpMap;
+    }
+
+    MapDrawer* GetMapDrawer()
+    {
+        return mpMapDrawer;
+    }
 
 private:
 

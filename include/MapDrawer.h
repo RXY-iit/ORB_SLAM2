@@ -21,12 +21,11 @@
 #ifndef MAPDRAWER_H
 #define MAPDRAWER_H
 
-#include"Map.h"
-#include"MapPoint.h"
-#include"KeyFrame.h"
-#include<pangolin/pangolin.h>
-
-#include<mutex>
+#include "Map.h"
+#include "MapPoint.h"
+#include "KeyFrame.h"
+#include <pangolin/pangolin.h>
+#include <ros/ros.h>
 
 namespace ORB_SLAM2
 {
@@ -44,9 +43,12 @@ public:
     void SetCurrentCameraPose(const cv::Mat &Tcw);
     void SetReferenceKeyFrame(KeyFrame *pKF);
     void GetCurrentOpenGLCameraMatrix(pangolin::OpenGlMatrix &M);
+    void SaveMapPointsToPLY(const std::string &filename);
+    void SaveKeyFramesToPLY(const std::string &filename);
+    void PublishMapPoints();
+    void PublishKeyFrames();
 
 private:
-
     float mKeyFrameSize;
     float mKeyFrameLineWidth;
     float mGraphLineWidth;
@@ -57,6 +59,10 @@ private:
     cv::Mat mCameraPose;
 
     std::mutex mMutexCamera;
+    
+    // ROS Publishers
+    ros::Publisher point_cloud_pub_;
+    ros::Publisher keyframe_pub_;
 };
 
 } //namespace ORB_SLAM

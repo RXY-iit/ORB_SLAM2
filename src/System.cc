@@ -19,7 +19,7 @@
 */
 
 
-
+#include "unistd.h"
 #include "System.h"
 #include "Converter.h"
 #include <thread>
@@ -108,9 +108,6 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
 
     mpLocalMapper->SetTracker(mpTracker);
     mpLocalMapper->SetLoopCloser(mpLoopCloser);
-
-    mpLoopCloser->SetTracker(mpTracker);
-    mpLoopCloser->SetLocalMapper(mpLocalMapper);
 }
 
 cv::Mat System::TrackStereo(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timestamp)
@@ -416,6 +413,46 @@ void System::SaveKeyFrameTrajectoryTUM(const string &filename)
     cout << endl << "trajectory saved!" << endl;
 }
 
+void System::SaveMonocularTrajectory(const string &filename)
+{
+    cout << endl << "Saving monocular trajectory to " << filename << " ..." << endl;
+
+    // Get all keyframes from the map
+    vector<KeyFrame*> vpKFs = mpMap->GetAllKeyFrames();
+    sort(vpKFs.begin(), vpKFs.end(), KeyFrame::lId);
+
+    ofstream f;
+    f.open(filename.c_str());
+    f << fixed;
+
+    for (size_t i = 0; i < vpKFs.size(); i++)
+    {
+        KeyFrame* pKF = vpKFs[i];
+
+        if (pKF->isBad())
+            continue;
+
+        // Retrieve the keyframe's rotation and translation
+        cv::Mat R = pKF->GetRotation().t(); // Get the rotation matrix and transpose it
+        vector<float> q = Converter::toQuaternion(R); // Convert rotation matrix to quaternion
+        cv::Mat t = pKF->GetCameraCenter(); // Get the translation vector
+
+        // Write timestamp, translation, and quaternion to file
+        f << setprecision(6) << pKF->mTimeStamp << " "
+          << setprecision(9) << t.at<float>(0) << " "
+          << setprecision(9) << t.at<float>(1) << " "
+          << setprecision(9) << t.at<float>(2) << " "
+          << q[0] << " "
+          << q[1] << " "
+          << q[2] << " "
+          << q[3] << endl;
+    }
+
+    f.close();
+    cout << endl << "Trajectory saved!" << endl;
+}
+
+
 void System::SaveTrajectoryKITTI(const string &filename)
 {
     cout << endl << "Saving camera trajectory to " << filename << " ..." << endl;
@@ -487,6 +524,30 @@ vector<cv::KeyPoint> System::GetTrackedKeyPointsUn()
 {
     unique_lock<mutex> lock(mMutexState);
     return mTrackedKeyPointsUn;
+}
+
+void System::SaveMapPoints(const string &filename)
+{
+    // 获取当前地图中的所有地图点
+    vector<MapPoint*> vpMPs = mpMap->GetAllMapPoints();
+    
+    ofstream f;
+    f.open(filename.c_str());
+    f << fixed;
+
+    // 保存地图点的信息：ID、位置坐标(x,y,z)
+    for(size_t i=0; i<vpMPs.size(); i++)
+    {
+        if(vpMPs[i]->isBad())
+            continue;
+        cv::Mat pos = vpMPs[i]->GetWorldPos();
+        f << vpMPs[i]->mnId << " " 
+          << pos.at<float>(0) << " " 
+          << pos.at<float>(1) << " " 
+          << pos.at<float>(2) << endl;
+    }
+    
+    f.close();
 }
 
 } //namespace ORB_SLAM

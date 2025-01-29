@@ -1,0 +1,53 @@
+%YAML:1.0
+
+#--------------------------------------------------------------------------------------------
+# Camera Parameters
+#--------------------------------------------------------------------------------------------
+Camera.fx: 1405.02380
+Camera.fy: 1403.89954
+Camera.cx: 930.108604
+Camera.cy: 616.062722
+Camera.k1: -0.137263445
+Camera.k2: 0.129164945
+Camera.p1: 0.0000243017098
+Camera.p2: -0.0000581905742
+Camera.k3: -0.0402354780
+Camera.width: 1920
+Camera.height: 1200
+Camera.fps: 30.0
+Camera.RGB: 0
+
+#--------------------------------------------------------------------------------------------
+# ORB Parameters
+#--------------------------------------------------------------------------------------------
+ORBextractor.nFeatures: 2000
+ORBextractor.scaleFactor: 1.3
+ORBextractor.nLevels: 8
+ORBextractor.iniThFAST: 20
+ORBextractor.minThFAST: 8
+
+#--------------------------------------------------------------------------------------------
+# Viewer Parameters
+#--------------------------------------------------------------------------------------------
+Viewer.KeyFrameSize: 0.05
+Viewer.KeyFrameLineWidth: 1
+Viewer.GraphLineWidth: 0.9
+Viewer.PointSize: 2
+Viewer.CameraSize: 0.08
+Viewer.CameraLineWidth: 3
+Viewer.ViewpointX: 0
+Viewer.ViewpointY: -0.7
+Viewer.ViewpointZ: -1.8
+Viewer.ViewpointF: 500
+
+# #--------------------------------------------------------------------------------------------
+# # Save Trajectory Parameters
+# #--------------------------------------------------------------------------------------------
+# SLAM.SaveKeyFrameTrajectoryTUM: "/home/ruan-x/Documents/save_data/KeyFrameTrajectory.txt"
+# SLAM.SaveTrajectoryTUM: "/home/ruan-x/Documents/save_data/CameraTrajectory.txt"
+# SLAM.SaveMonocularTrajectory: "/home/ruan-x/Documents/save_data/MonocularTrajectory.txt"
+
+# #--------------------------------------------------------------------------------------------
+# # Save Map Points Parameters
+# #--------------------------------------------------------------------------------------------
+# SLAM.SaveMapPoints: "/home/ruan-x/Documents/save_data/MapPoints.txt"

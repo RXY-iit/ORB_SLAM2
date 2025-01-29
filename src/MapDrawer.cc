@@ -24,9 +24,15 @@
 #include <pangolin/pangolin.h>
 #include <mutex>
 
+// #include <ros/ros.h>
+#include <pcl/point_cloud.h>
+#include <pcl/point_types.h>
+#include <pcl/io/ply_io.h>
+#include <sensor_msgs/PointCloud2.h>
+#include <pcl_conversions/pcl_conversions.h>
+
 namespace ORB_SLAM2
 {
-
 
 MapDrawer::MapDrawer(Map* pMap, const string &strSettingPath):mpMap(pMap)
 {
@@ -38,7 +44,6 @@ MapDrawer::MapDrawer(Map* pMap, const string &strSettingPath):mpMap(pMap)
     mPointSize = fSettings["Viewer.PointSize"];
     mCameraSize = fSettings["Viewer.CameraSize"];
     mCameraLineWidth = fSettings["Viewer.CameraLineWidth"];
-
 }
 
 void MapDrawer::DrawMapPoints()
@@ -259,6 +264,48 @@ void MapDrawer::GetCurrentOpenGLCameraMatrix(pangolin::OpenGlMatrix &M)
     }
     else
         M.SetIdentity();
+}
+
+void MapDrawer::SaveMapPointsToPLY(const std::string &filename)
+{
+    const vector<MapPoint*> &vpMPs = mpMap->GetAllMapPoints();
+    
+    ofstream f(filename.c_str());
+    f << "ply" << endl;
+    f << "format ascii 1.0" << endl;
+    f << "element vertex " << vpMPs.size() << endl;
+    f << "property float x" << endl;
+    f << "property float y" << endl;
+    f << "property float z" << endl;
+    f << "end_header" << endl;
+
+    for(size_t i=0; i<vpMPs.size(); i++)
+    {
+        if(vpMPs[i]->isBad())
+            continue;
+        cv::Mat pos = vpMPs[i]->GetWorldPos();
+        f << pos.at<float>(0) << " " << pos.at<float>(1) << " " << pos.at<float>(2) << endl;
+    }
+    
+    f.close();
+}
+
+void MapDrawer::SaveKeyFramesToPLY(const std::string &filename)
+{
+    pcl::PointCloud<pcl::PointXYZ> cloud;
+    const vector<KeyFrame*> vpKFs = mpMap->GetAllKeyFrames();
+
+    for(size_t i = 0; i < vpKFs.size(); i++)
+    {
+        cv::Mat pos = vpKFs[i]->GetCameraCenter();
+        pcl::PointXYZ point;
+        point.x = pos.at<float>(0);
+        point.y = pos.at<float>(1);
+        point.z = pos.at<float>(2);
+        cloud.push_back(point);
+    }
+
+    pcl::io::savePLYFile(filename, cloud);
 }
 
 } //namespace ORB_SLAM
