@@ -21,12 +21,6 @@
 #include "Viewer.h"
 #include <pangolin/pangolin.h>
 #include <mutex>
-#include <opencv2/imgcodecs.hpp>
-#include <iomanip>
-#include <sstream>
-#include <fstream>
-#include <ctime>
-#include <sys/stat.h>
 
 namespace ORB_SLAM2
 {
@@ -54,39 +48,6 @@ Viewer::Viewer(System* pSystem, FrameDrawer *pFrameDrawer, MapDrawer *pMapDrawer
     mViewpointY = fSettings["Viewer.ViewpointY"];
     mViewpointZ = fSettings["Viewer.ViewpointZ"];
     mViewpointF = fSettings["Viewer.ViewpointF"];
-
-    // 初始化保存相关变量
-    mSaveDir = "/home/ruan-x/Documents/save_data/";
-    mFrameCounter = 0;
-    mbSaveFrames = true;
-
-    // 创建保存目录并检查
-    if(!CreateSaveDirectories())
-    {
-        cerr << "Error: Failed to create save directories" << endl;
-        mbSaveFrames = false;
-        return;
-    }
-}
-
-bool Viewer::CreateSaveDirectories()
-{
-    vector<string> dirs = {
-        mSaveDir,
-        mSaveDir + "KeyFrames",
-        mSaveDir + "MapPoints",
-        mSaveDir + "Matches"
-    };
-
-    for(const auto& dir : dirs)
-    {
-        if(mkdir(dir.c_str(), 0777) != 0 && errno != EEXIST)
-        {
-            cerr << "Error creating directory: " << dir << endl;
-            return false;
-        }
-    }
-    return true;
 }
 
 void Viewer::Run()
@@ -110,7 +71,6 @@ void Viewer::Run()
     pangolin::Var<bool> menuShowGraph("menu.Show Graph",true,true);
     pangolin::Var<bool> menuLocalizationMode("menu.Localization Mode",false,true);
     pangolin::Var<bool> menuReset("menu.Reset",false,false);
-    pangolin::Var<bool> menuSaveFrame("menu.Save Frame",false,false);
 
     // Define Camera Render Object (for view / scene browsing)
     pangolin::OpenGlRenderState s_cam(
@@ -126,7 +86,13 @@ void Viewer::Run()
     pangolin::OpenGlMatrix Twc;
     Twc.SetIdentity();
 
-    cv::namedWindow("ORB-SLAM2: Current Frame");
+    // ウィンドウを作成し、サイズを設定
+    cv::namedWindow("ORB-SLAM2: Current Frame", cv::WINDOW_NORMAL);
+    
+    // 元のサイズの60%に設定
+    int resizedWidth = static_cast<int>(mImageWidth * 0.8);
+    int resizedHeight = static_cast<int>(mImageHeight * 0.8);
+    cv::resizeWindow("ORB-SLAM2: Current Frame", resizedWidth, resizedHeight);
 
     bool bFollow = true;
     bool bLocalizationMode = false;
@@ -174,15 +140,10 @@ void Viewer::Run()
         pangolin::FinishFrame();
 
         cv::Mat im = mpFrameDrawer->DrawFrame();
-        cv::imshow("ORB-SLAM2: Current Frame",im);
-
-        // 保存当前帧
-        if(menuSaveFrame || mbSaveFrames)
-        {
-            SaveCurrentState();
-            menuSaveFrame = false;
-        }
-
+        // 必要に応じて画像自体もリサイズ
+        cv::Mat imResized;
+        cv::resize(im, imResized, cv::Size(resizedWidth, resizedHeight));
+        cv::imshow("ORB-SLAM2: Current Frame", imResized);
         cv::waitKey(mT);
 
         if(menuReset)
@@ -213,40 +174,6 @@ void Viewer::Run()
     }
 
     SetFinish();
-}
-
-string Viewer::GetTimeStamp()
-{
-    auto now = std::chrono::system_clock::now();
-    auto in_time_t = std::chrono::system_clock::to_time_t(now);
-    std::stringstream ss;
-    ss << std::put_time(std::localtime(&in_time_t), "%Y%m%d_%H%M%S");
-    return ss.str();
-}
-
-int Viewer::GetCurrentKeyFrameId()
-{
-    static int keyFrameId = 0;
-    return keyFrameId;
-}
-
-int Viewer::GetTotalMapPoints()
-{
-    // 获取当前系统中的所有地图点
-    vector<MapPoint*> mapPoints = mpSystem->GetTrackedMapPoints();
-    int count = 0;
-    for(size_t i=0; i<mapPoints.size(); i++)
-    {
-        MapPoint* pMP = mapPoints[i];
-        if(pMP && !pMP->isBad())
-            count++;
-    }
-    return count;
-}
-
-void Viewer::SaveCurrentState()
-{
-    // 空の実装 - データの保存はFrameDrawerで行う
 }
 
 void Viewer::RequestFinish()

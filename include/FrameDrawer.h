@@ -45,6 +45,9 @@ public:
 
     // Draw last processed frame.
     cv::Mat DrawFrame();
+    
+    // Save tracking info to CSV and image
+    void SaveTrackingInfo();
 
 protected:
     void DrawTextInfo(cv::Mat &im, int nState, cv::Mat &imText);
@@ -67,8 +70,8 @@ protected:
 private:
     // CSV保存相关
     void InitializeCSV();
-    void SaveTrackingInfo();
     string mSaveDir;
+    string mKeyFramePicDir;  // 图片保存目录
     std::chrono::steady_clock::time_point mStartTime;
 };
 
