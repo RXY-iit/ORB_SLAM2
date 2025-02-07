@@ -5,16 +5,17 @@
 #--------------------------------------------------------------------------------------------
 
 # Camera calibration and distortion parameters (OpenCV) 
-Camera.fx: 1405.02380
-Camera.fy: 1403.89954
-Camera.cx: 930.108604
-Camera.cy: 616.062722
 
-Camera.k1: -0.137263445
-Camera.k2: 0.129164945
-Camera.p1: 0.0000243017098
-Camera.p2: -0.0000581905742
-Camera.k3: -0.0402354780
+Camera.fx: 1421.51354
+Camera.fy: 1419.94541
+Camera.cx: 929.738660
+Camera.cy: 606.275012
+
+Camera.k1: -0.13786277
+Camera.k2: 0.17211554
+Camera.p1: -0.00173524
+Camera.p2: -0.00042288
+Camera.k3: -0.09129849
 
 # Camera resolution
 Camera.width: 1920
@@ -61,7 +62,7 @@ Viewer.CameraLineWidth: 3
 Viewer.ViewpointX: 0
 Viewer.ViewpointY: -0.7
 Viewer.ViewpointZ: -1.8
-Viewer.ViewpointF: 500
+Viewer.ViewpointF: 300
 
 # #--------------------------------------------------------------------------------------------
 # # Save Trajectory Parameters

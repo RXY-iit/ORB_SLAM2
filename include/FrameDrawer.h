@@ -25,11 +25,9 @@
 #include "MapPoint.h"
 #include "Map.h"
 
-#include<opencv2/core/core.hpp>
-#include<opencv2/features2d/features2d.hpp>
-
-#include<mutex>
-
+#include <opencv2/core/core.hpp>
+#include <mutex>
+#include <chrono>
 
 namespace ORB_SLAM2
 {
@@ -49,14 +47,13 @@ public:
     cv::Mat DrawFrame();
 
 protected:
-
     void DrawTextInfo(cv::Mat &im, int nState, cv::Mat &imText);
 
     // Info of the frame to be drawn
     cv::Mat mIm;
     int N;
     vector<cv::KeyPoint> mvCurrentKeys;
-    vector<bool> mvbMap, mvbVO;
+    vector<bool> mvbVO, mvbMap;
     bool mbOnlyTracking;
     int mnTracked, mnTrackedVO;
     vector<cv::KeyPoint> mvIniKeys;
@@ -66,6 +63,13 @@ protected:
     Map* mpMap;
 
     std::mutex mMutex;
+    
+private:
+    // CSV保存相关
+    void InitializeCSV();
+    void SaveTrackingInfo();
+    string mSaveDir;
+    std::chrono::steady_clock::time_point mStartTime;
 };
 
 } //namespace ORB_SLAM

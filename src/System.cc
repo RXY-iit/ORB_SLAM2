@@ -412,15 +412,21 @@ void System::SaveKeyFrameTrajectoryTUM(const string &filename)
     f.close();
     cout << endl << "trajectory saved!" << endl;
 }
-
 void System::SaveMonocularTrajectory(const string &filename)
 {
     cout << endl << "Saving monocular trajectory to " << filename << " ..." << endl;
 
-    // Get all keyframes from the map
     vector<KeyFrame*> vpKFs = mpMap->GetAllKeyFrames();
     sort(vpKFs.begin(), vpKFs.end(), KeyFrame::lId);
 
+    // 计算参考关键帧的位置（第一帧）
+    if(vpKFs.empty()) {
+        cout << "No keyframes to save!" << endl;
+        return;
+    }
+
+    cv::Mat t_ref = vpKFs[0]->GetCameraCenter();
+    
     ofstream f;
     f.open(filename.c_str());
     f << fixed;
@@ -431,17 +437,40 @@ void System::SaveMonocularTrajectory(const string &filename)
 
         if (pKF->isBad())
             continue;
+        cv::Mat R = pKF->GetRotation().t();
+        vector<float> q = Converter::toQuaternion(R);
+        cv::Mat t = pKF->GetCameraCenter();
+        
+        // 根据配置选择是否进行尺度变换
+        bool use_scale = true; // 可以通过配置文件或参数控制
+        // bool use_scale = false; // 可以通过配置文件或参数控制
+        cv::Mat t_output;
+        
+        if(use_scale) {
+            // 计算当前帧与参考帧之间的距离
+            cv::Mat t_diff = t - t_ref;
+            
+            // 从配置文件读取实际距离和计算距离的对应关系
+            float real_dist = 10.0;    // 实际测量距离(米)
+            float calc_dist = 2.68;    // 系统计算距离
+            float scale = real_dist/calc_dist;  // 计算尺度因子
+            
+            // 只对x和z轴应用尺度变换,保持y轴不变
+            t_output = t_ref.clone();
+            t_output.at<float>(0) = t_ref.at<float>(0) + t_diff.at<float>(0) * scale; // x轴缩放
+            t_output.at<float>(1) = t.at<float>(1);  // y轴保持原始值
+            t_output.at<float>(2) = t_ref.at<float>(2) + t_diff.at<float>(2) * scale; // z轴缩放
 
-        // Retrieve the keyframe's rotation and translation
-        cv::Mat R = pKF->GetRotation().t(); // Get the rotation matrix and transpose it
-        vector<float> q = Converter::toQuaternion(R); // Convert rotation matrix to quaternion
-        cv::Mat t = pKF->GetCameraCenter(); // Get the translation vector
+        } else {
+            // 不进行尺度变换,使用原始轨迹
+            t_output = t;
+        }
 
-        // Write timestamp, translation, and quaternion to file
+        // 写入轨迹数据
         f << setprecision(6) << pKF->mTimeStamp << " "
-          << setprecision(9) << t.at<float>(0) << " "
-          << setprecision(9) << t.at<float>(1) << " "
-          << setprecision(9) << t.at<float>(2) << " "
+          << setprecision(9) << t_output.at<float>(0) << " "
+          << setprecision(9) << t_output.at<float>(1) << " "
+          << setprecision(9) << t_output.at<float>(2) << " "
           << q[0] << " "
           << q[1] << " "
           << q[2] << " "

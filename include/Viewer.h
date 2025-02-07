@@ -26,8 +26,9 @@
 #include "MapDrawer.h"
 #include "Tracking.h"
 #include "System.h"
-
 #include <mutex>
+#include <opencv2/core/core.hpp>
+#include <string>
 
 namespace ORB_SLAM2
 {
@@ -60,6 +61,19 @@ private:
 
     bool Stop();
 
+    bool SaveFrame(const cv::Mat &im, const string &filename);
+
+    void SaveCurrentState();
+
+    string GetTimeStamp();
+
+    // 添加目录创建函数声明
+    bool CreateSaveDirectories();
+
+    // 添加获取关键帧信息的函数
+    int GetCurrentKeyFrameId();
+    int GetTotalMapPoints();
+
     System* mpSystem;
     FrameDrawer* mpFrameDrawer;
     MapDrawer* mpMapDrawer;
@@ -80,6 +94,12 @@ private:
     bool mbStopped;
     bool mbStopRequested;
     std::mutex mMutexStop;
+
+    // 保存相关变量
+    string mSaveDir;
+    int mFrameCounter;
+    bool mbSaveFrames;
+    std::mutex mMutexSave;
 
 };
 
