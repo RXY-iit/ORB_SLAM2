@@ -29,6 +29,8 @@
 #include <mutex>
 #include <opencv2/core/core.hpp>
 #include <string>
+#include <queue>
+#include <thread>
 
 namespace ORB_SLAM2
 {
@@ -67,6 +69,9 @@ private:
 
     string GetTimeStamp();
 
+    // 图像保存线程函数
+    void SaveThreadFunction();
+
     // 添加目录创建函数声明
     bool CreateSaveDirectories();
 
@@ -95,12 +100,8 @@ private:
     bool mbStopRequested;
     std::mutex mMutexStop;
 
-    // 保存相关变量
-    string mSaveDir;
-    int mFrameCounter;
-    bool mbSaveFrames;
-    std::mutex mMutexSave;
-
+    // 保存路径
+    string mSaveImagePath;
 };
 
 }

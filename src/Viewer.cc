@@ -21,6 +21,11 @@
 #include "Viewer.h"
 #include <pangolin/pangolin.h>
 #include <mutex>
+#include "KeyFrame.h"
+#include "Frame.h"
+#include "Map.h"
+#include <iomanip>
+#include <sstream>
 
 namespace ORB_SLAM2
 {
@@ -54,6 +59,10 @@ void Viewer::Run()
 {
     mbFinished = false;
     mbStopped = false;
+    // 创建保存图像的目录
+    mSaveImagePath = "/home/ruan-x/Documents/save_data/KeyFrameImages";
+    string cmd = "rm -rf " + mSaveImagePath + " && mkdir -p " + mSaveImagePath;
+    system(cmd.c_str());
 
     pangolin::CreateWindowAndBind("ORB-SLAM2: Map Viewer",1024,768);
 
@@ -140,11 +149,33 @@ void Viewer::Run()
         pangolin::FinishFrame();
 
         cv::Mat im = mpFrameDrawer->DrawFrame();
-        // 必要に応じて画像自体もリサイズ
+        // 必要时调整图像大小
         cv::Mat imResized;
         cv::resize(im, imResized, cv::Size(resizedWidth, resizedHeight));
+
+        // 先显示图像，避免阻塞
         cv::imshow("ORB-SLAM2: Current Frame", imResized);
-        cv::waitKey(mT);
+        if(cv::waitKey(mT) == 27)  // ESC键退出
+        {
+            RequestFinish();
+        }
+
+        // 检查是否需要保存图像（放在显示之后）
+        Map* pMap = mpMapDrawer->mpMap;
+        if(pMap && mpFrameDrawer->NeedSaveFrame())
+        {
+            // 获取当前时间
+            double sim_time = mpFrameDrawer->GetCurrentTime();
+            stringstream ss;
+            ss << fixed << setprecision(1) << sim_time;
+            string imageName = mSaveImagePath + "/frame_" + ss.str() + ".jpg";
+            cout << "save image: " << imageName << endl;
+            try {
+                cv::imwrite(imageName, im);
+            } catch (const cv::Exception& e) {
+                cerr << "Error saving image: " << e.what() << endl;
+            }
+        }
 
         if(menuReset)
         {
@@ -228,7 +259,6 @@ bool Viewer::Stop()
     }
 
     return false;
-
 }
 
 void Viewer::Release()

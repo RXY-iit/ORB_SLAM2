@@ -48,6 +48,22 @@ public:
     
     // Save tracking info to CSV and image
     void SaveTrackingInfo();
+    
+    // Check if we need to save the current frame
+    bool NeedSaveFrame() {
+        unique_lock<mutex> lock(mMutex);
+        bool needSave = mbNeedSaveFrame;
+        mbNeedSaveFrame = false;  // Reset flag after checking
+        return needSave;
+    }
+    
+    // Get current simulation time
+    double GetCurrentTime() {
+        unique_lock<mutex> lock(mMutex);
+        auto current_time = std::chrono::steady_clock::now();
+        return std::chrono::duration_cast<std::chrono::milliseconds>(
+            current_time - mStartTime).count() / 1000.0;
+    }
 
 protected:
     void DrawTextInfo(cv::Mat &im, int nState, cv::Mat &imText);
@@ -62,6 +78,7 @@ protected:
     vector<cv::KeyPoint> mvIniKeys;
     vector<int> mvIniMatches;
     int mState;
+    bool mbNeedSaveFrame;  // Flag to indicate if we need to save the frame
 
     Map* mpMap;
 

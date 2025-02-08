@@ -35,6 +35,7 @@ FrameDrawer::FrameDrawer(Map* pMap):mpMap(pMap)
 {
     mState=Tracking::SYSTEM_NOT_READY;
     mIm = cv::Mat(480,640,CV_8UC3, cv::Scalar(0,0,0));
+    mbNeedSaveFrame = false;
     
     // 初始化CSV文件
     mSaveDir = "/home/ruan-x/Documents/save_data/";
@@ -54,8 +55,14 @@ void FrameDrawer::InitializeCSV()
 
 void FrameDrawer::SaveTrackingInfo()
 {
+    unique_lock<mutex> lock(mMutex);
     if(mState != Tracking::OK)
         return;
+        
+    int nKFs = mpMap->KeyFramesInMap();
+    int nMPs = mpMap->MapPointsInMap();
+    int nTracked = mnTracked;
+    lock.unlock();  // 在写文件前释放锁
         
     string csv_filename = mSaveDir + "tracking_info.csv";
     ofstream csv_file(csv_filename, ios::app);
@@ -67,23 +74,22 @@ void FrameDrawer::SaveTrackingInfo()
     double time_diff = std::chrono::duration_cast<std::chrono::milliseconds>(
         current_time - mStartTime).count() / 1000.0;
         
-    // 获取当前状态
-    int nKFs = mpMap->KeyFramesInMap();
-    int nMPs = mpMap->MapPointsInMap();
-    
     // 写入数据
     csv_file << nKFs << ","
              << fixed << setprecision(1) << time_diff << ","
              << nMPs << ","
-             << mnTracked << "\n";
+             << nTracked << "\n";
              
     cout << "Saved keyframe " << nKFs 
          << " at time " << fixed << setprecision(1) << time_diff << "s"
          << " with " << nMPs << " map points" 
-         << " and " << mnTracked << " matches"
+         << " and " << nTracked << " matches"
          << endl;
          
     csv_file.close();
+    
+    // Set flag to save frame
+    mbNeedSaveFrame = true;
 }
 
 cv::Mat FrameDrawer::DrawFrame()
@@ -259,7 +265,10 @@ void FrameDrawer::Update(Tracking *pTracker)
     }
     mState=static_cast<int>(pTracker->mLastProcessedState);
     
-    // 在计算完匹配数后保存信息
+    // 在更新完状态后，立即释放锁
+    lock.unlock();
+    
+    // 在释放锁后保存信息
     SaveTrackingInfo();
 }
 
